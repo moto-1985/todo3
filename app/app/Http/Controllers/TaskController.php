@@ -74,7 +74,7 @@ class TaskController extends Controller
             'title'=>'required|max:255',
             'content'=>'required|max:255',
             'user_id'=>'required',
-            'start_date' => 'required|date|after:tomorrow',
+            'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'attached_file_path'=>'image|max:1024'
         ]);
@@ -130,7 +130,7 @@ class TaskController extends Controller
             'title'=>'required|max:255',
             'content'=>'required|max:255',
             'user_id'=>'required',
-            'start_date' => 'required|date|after:tomorrow',
+            'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'status'=>'required',
             'attached_file_path'=>'image|max:1024'
@@ -146,7 +146,7 @@ class TaskController extends Controller
              // 日時追加
             $name = date('Ymd_His').'_'.$original;
             request()->file('attached_file_path')->move('storage/images', $name);
-            $this->task->attached_file_path = $name;
+            $task->attached_file_path = $name;
         }
         $task->save();
         return redirect()->route('mypage')->with('message', 'タスクを更新しました');
