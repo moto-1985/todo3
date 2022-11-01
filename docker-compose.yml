@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  app:
+    build: ./docker
+    volumes:
+      - ./app:/var/www/app
+  nginx:
+    image: nginx 
+    ports:
+      - 8800:80 
+    volumes:
+      - ./app:/var/www/app
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+  
+  db:
+    image: mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: passwordRoot
+      MYSQL_DATABASE: todo3
+      MYSQL_USER: Arai
+      MYSQL_PASSWORD: passwordArai
+    ports:
+      - 3800:3306
