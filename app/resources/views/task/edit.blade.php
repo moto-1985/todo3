@@ -43,9 +43,9 @@
                     </div>
                     <img src="{{ asset('storage/images/'.$task->attached_file_path)}}" class="mx-auto" style="height:300px;">
                     @endif
-                    <label for="attached_file_path" class="font-semibold leading-none mt-4">添付ファイル(1MBまで) </label>
+                    <label for="attached_file" class="font-semibold leading-none mt-4">添付ファイル(1MBまで) </label>
                     <div>
-                    <input id="attached_file_path" type="file" name="attached_file_path">
+                    <input id="attached_file" type="file" name="attached_file">
                     </div>
                 </div>
 

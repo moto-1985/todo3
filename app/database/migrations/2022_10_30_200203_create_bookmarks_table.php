@@ -15,8 +15,9 @@ return new class extends Migration
     {
         Schema::create('bookmarks', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('task_id');
+            // 指摘事項bookmarkを先に消してますがDBのテーブルでFKを貼っていれば、わざわざコードで消さずともDBの機能で消すことができます。FKをテーブル間の連携IDには貼っておくのが良いです
+            $table->foreignId('user_id')->constrained();
+            $table->foreignId('task_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

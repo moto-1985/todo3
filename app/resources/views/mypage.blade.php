@@ -25,7 +25,7 @@
                             </h1>
                             <hr class="w-full">
                             <h2 class="text-lg text-gray-700 font-semibold mt-4">内容</h2>
-                            <p class=" text-gray-600">{{Str::limit ($task->content, 100, ' …' )}} </p>
+                            <p class=" text-gray-600">{!!nl2br(e(Str::limit($task->content, 100, ' …' )))!!}</p>
                             @if($task->attached_file_path)
                                 <img src="{{ asset('storage/images/'.$task->attached_file_path)}}" class="mx-auto" style="height:300px;">
                                 <div class="mt-4 flex flex-row-reverse">

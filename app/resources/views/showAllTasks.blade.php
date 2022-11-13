@@ -7,7 +7,6 @@
         <x-message :message="session('message')" />
 
     </x-slot>
-
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         @if (count($tasks) == 0)
@@ -24,9 +23,11 @@
                             <div class="mt-4 mb-12">
                                 @php
                                     $is_bookmarked = false;
-                                    @endphp
+                                    // 指摘箇所auth()ヘルパはどこからでも呼べるのでコントローラで無理に毎回渡さずともblade側でauth()ヘルパを直接呼び出した方がいいかと思います。
+                                    $userId = auth()->id();
+                                @endphp
                                 @foreach ($task->bookmarks as $bookmark)
-                                    @if ($bookmark->user->id === $user->id)
+                                    @if ($bookmark->user->id === $userId)
                                     @php
                                         $is_bookmarked = true;
                                     @endphp
@@ -51,7 +52,8 @@
                             </h1>
                             <hr class="w-full">
                             <h2 class="text-lg text-gray-700 font-semibold mt-4">内容</h2>
-                            <p class=" text-gray-600">{{Str::limit ($task->content, 100, ' …' )}} </p>
+                            {{-- <p>{!!nl2br(e($basicinfo->text_memo))!!}</p> --}}
+                            <p class=" text-gray-600">{!!nl2br(e(Str::limit($task->content, 100, ' …' )))!!}</p>
                             @if($task->attached_file_path)
                                 <img src="{{ asset('storage/images/'.$task->attached_file_path)}}" class="mx-auto" style="height:300px;">
                                 <div class="mt-4 flex flex-row-reverse">

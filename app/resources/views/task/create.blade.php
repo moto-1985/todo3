@@ -36,16 +36,20 @@
                 </div>
 
                 <div class="w-full flex flex-col">
-                    <label for="attached_file_path" class="font-semibold leading-none mt-4">添付ファイル(1MBまで) </label>
+                    <label for="attached_file" class="font-semibold leading-none mt-4">添付ファイル(1MBまで) </label>
                     <div>
-                    <input id="attached_file_path" type="file" name="attached_file_path">
+                    <input id="attached_file" type="file" name="attached_file">
                     </div>
                 </div>
 
+                @php
+                    // 指摘箇所auth()ヘルパはどこからでも呼べるのでコントローラで無理に毎回渡さずともblade側でauth()ヘルパを直接呼び出した方がいいかと思います。
+                    $userId = auth()->id();
+                @endphp
                 <label for="user_id" class="block font-semibold leading-none  mt-4">担当者</label>
                     <select name="user_id" id="user_id" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ">
                         @foreach ($users as $user)
-                        <option value="{{ $user->id }}" {{ $myself->id === $user->id ? "selected": '' }}>{{ $user->name }}</option>
+                        <option value="{{ $user->id }}" {{ $userId === $user->id ? "selected": '' }}>{{ $user->name }}</option>
                         @endforeach
                     </select>
 

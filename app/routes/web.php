@@ -27,18 +27,21 @@ require __DIR__.'/auth.php';
 // 教わったこと
 // bookmarksとかtasks複数にする → 一覧で出るから複数 {$id}をつければそのうちの一個だとURLからわかる。
 // resourceは無駄なルートが増える しかもrouteを見ただけだと何を使っているかわからない
-// /task などprefixが一緒でgroupingする機能がある。
+// task などprefixが一緒でgroupingする機能がある。
 Route::middleware(['auth'])->group(function () {
     // RouteServiceProviderで決めた Homeページ
     Route::get('/mypage', [TaskController::class, 'mypage'])->name('mypage');
+    // ブックマーク一覧
+    // 指摘箇所
+    // ブックマーク一覧は /tasks/bookmarks　から /bookmarksに変更/ 一覧は oos のようにすると気持ちいい
+    Route::get('/bookmarks', [BookmarkController::class, 'showbookmarks'])->name('tasks.showbookmarks');
+
     Route::prefix('tasks')->name('tasks.')->group(function () {
 
         // ブックマークコントローラのCRUD
         Route::post('/{task}/bookmark', [BookmarkController::class, 'bookmark'])->name('bookmark');
-        Route::get('/bookmarks', [BookmarkController::class, 'showbookmarks'])->name('showbookmarks');
-
         // タスクコントローラのCRUD
-        Route::get('/showalltasks', [TaskController::class, 'showAllTasks'])->name('showAllTasks');
+        Route::get('/', [TaskController::class, 'showAllTasks'])->name('showAllTasks');
         Route::get('/new', [TaskController::class, 'create'])->name('create');
         Route::post('', [TaskController::class, 'store'])->name('store');
         Route::get('/{task}', [TaskController::class, 'show'])->name('show');

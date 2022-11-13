@@ -15,7 +15,9 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            // 指摘事項ユーザーが消えたらタスクは残って、誰かが引き継ぐとかしないといけないと思うので、タスクが消えちゃうのはまずいかと！set nullあたりが妥当かと思います。
+            // readoubleになかった　laracastsで調べた https://laracasts.com/discuss/channels/eloquent/in-migrations-how-i-can-use-something-like-set-null?page=1&replyId=313544
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->string('title');
             $table->text('content')->nullable();
             $table->string('attached_file_path')->nullable();
@@ -25,7 +27,7 @@ return new class extends Migration
             $table->softDeletes('deleted_at');
             $table->timestamps();
             // 外部キー制約
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

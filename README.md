@@ -108,3 +108,123 @@ php artisan storage:link
 ・ログイン、アカウント登録、は全てbreezeのデフォルトのを使ってる。pathやDBのテーブル定義もそのまま使っている。
 ・タスクの削除・編集が誰でもできてしまう。他人のアサインされているタスクを誰でも消せちゃうから、管理者と閲覧者などロールが必要
 ・ボタンにcomponentのprimary-button.bladeを使っているが、色が変わらなく、編集・削除ボタンなど本当は別のcomponent作って使う必要がある
+
+
+
+
+アプリとしての挙動
+ブックマーク一覧ページのルーティングは /tasks/bookmarksとなっているが  /bookmarksが気持ちいい（ブックマークの登録のルーティングは /tasks/{task}/bookmark でOK）
+全タスク一覧は /tasks/showalltasks じゃなくて /tasksとかが気持ちいい
+
+実装面
+BookmarkController
+showbookmarksメソッド
+
+◆クエリビルダじゃなくEloquentを使いましょう
+        $tasksWithBookmarks = TASK::Join(‘bookmarks’, ‘bookmarks.task_id’, ‘=’, ‘tasks.id’) 
+               ->where(‘bookmarks.user_id’, ‘=’, $user->id) 
+               ->get();
+ですが、Eloquntの機能を使った方がいいです。上記はクエリビルダでSQLを書いてる感じであまり良くないです。（あとTASKじゃなくてTaskです）
+リレーションを使ってこんな感じで取れます。
+$tasksWithBookmarks = Task::whereHas('bookmarks', function($query) use ($user) {
+        $query->where('user_id', $user->id);
+    })
+    ->get();
+JOINしてしまうと、単一の表になってしまい、ループしづらいです。
+リレーションでやれば、テーブルの入れ子構造のまま取得できるので、ループしやすいです。
+
+
+bookmarkメソッド
+
+◆早期リターン（ガード節）を使いましょう！
+if ($request->is_bookmarked) 
+{
+    $task->bookmarks()->where(‘user_id’, auth()->user()->id )->delete();
+    return back()->with(‘message’, ‘ブックマーク解除しました’);
+} else { 
+    $bookmark = Bookmark::create([ 
+           ‘user_id’=>auth()->user()->id, 
+           ‘task_id’=>$task->id,
+    ]);
+    return back()->with(‘message’, ‘ブックマークしました’);
+}
+ここは、elseなど不要です！
+if ($request->is_bookmarked) {
+    $task->bookmarks()->where('user_id', auth()->user()->id )->delete();
+    return back()->with('message', 'ブックマーク解除しました');
+}
+
+$bookmark = Bookmark::create([ 
+    'user_id'=>auth()->user()->id, 
+    'task_id'=>$task->id,
+]);
+return back()->with('message', 'ブックマークしました');
+if のtrue側にreturnがあるので、elseがなくとも同じになります。
+代わりにネスト（インデント）がなくなるので可読性が上がります。
+
+◆ログイン中ユーザーのID
+auth()->user()->id
+もちろんこれでもいいですが、
+auth()->id()
+でIDだけ取りたいならこちらもあります。
+（別に無理に変えなくても、知識として知っておいて損はないです！）
+
+◆不要なアクションメソッドは消しときましょう
+リソースコントローラの作成方法で自動で生まれているコードでしょうが、後でみた時になんだろう？ってなりやすいので、不要なメソッドは消しておくのが良いです！
+indexやcreateなど
+
+
+TaskController
+全体的に
+Viewに$userを毎回渡してますが、auth()ヘルパはどこからでも呼べるのでコントローラで無理に毎回渡さずともblade側でauth()ヘルパを直接呼び出した方がいいかと思います。そうすれば、本質的なその機能に必要なことだけがコントローラに残るので「何に注視すればいいのか」がはっきりしてきます。
+construct
+$this->task = new Task();　をしてますが、storeメソッドでしか使ってないので、storeメソッド側に書いてもいいかと思います。
+
+storeメソッド
+バリデーションをコントローラに書いてますが、フォームリクエストクラスというのがあり、バリデーション部分を別クラスに分けることができます。これによりFatコントローラを防ぐことができます！
+リクエストのattached_file_pathは名前が不適切だと思います。リクエストされているのはファイルの「パス」ではなく、「ファイルそのもの」が届いてるので変数名があまりよくないです！attached_fileとかがいいかと！
+
+フォームリクエストクラス調べたリンク
+https://readouble.com/laravel/8.x/ja/validation.html
+
+```
+php artisan make:request StoreUpdateTaskRequest
+```
+
+destoryメソッド
+bookmarkを先に消してますがDBのテーブルでFKを貼っていれば、わざわざコードで消さずともDBの機能で消すことができます。FKをテーブル間の連携IDには貼っておくのが良いです
+
+テーブル定義
+tasksテーブル
+$table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); でFKを貼ったまではいいですが、これだと該当ユーザが削除されると紐づいたタスクも消えてしまいます。意味合い的には担当者なので、ユーザーが消えたらタスクは残って、誰かが引き継ぐとかしないといけないと思うので、タスクが消えちゃうのはまずいかと！set nullあたりが妥当かと思います。
+
+
+blade
+bookmark.blade.php
+                                @php
+	                                    $is_bookmarked = false;
+	                                @endphp
+	                                @if ($task->user_id === $user->id)
+	                                    @php
+	                                        $is_bookmarked = true;
+	                                    @endphp
+	                                    <form method="post" action="{{route('tasks.bookmark', $task->task_id)}}">
+	                                        @csrf
+	                                        <input type="hidden" name='is_bookmarked' value="{{$is_bookmarked}}">
+	                                        <x-primary-button class="float-right mr-4 mb-12">ブックマーク解除</x-primary-button>
+	                                    </form>
+	                                @endif
+	                                
+	                                @if ($is_bookmarked === false)
+	                                    <form method="post" action="{{route('tasks.bookmark', $task->task_id)}}">
+	                                        @csrf
+	                                        <input type="hidden" name='is_bookmarked' value="{{$is_bookmarked}}">
+	                                        <x-primary-button class="float-right mr-4 mb-12">ブックマーク</x-primary-button>
+	                                    </form>
+	                                @endif
+このあたりの分岐のロジックが怪しいような感じがします。
+コントローラーで自分に紐づくタスクしか取ってないのに、@if ($task->user_id === $user->id) の分岐は不要かと思います。
+つまり @if ($is_bookmarked === false) 側の中に入ることはないんじゃないですかね？
+
+
+タスク一覧で内容の改行が表現できてない。あと画像も出てない（画像５）

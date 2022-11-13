@@ -23,34 +23,22 @@
                             {{-- 追加部分 --}}
                             <div class="mt-4 mb-12">
                                 @php
-                                    $is_bookmarked = false;
+                                    // 指摘事項このあたりの分岐のロジックが怪しいような感じがします。コントローラーで自分に紐づくタスクしか取ってないのに、@if ($task->user_id === $user->id) の分岐は不要かと思います。つまり @if ($is_bookmarked === false) 側の中に入ることはないんじゃないですかね？
+                                    $is_bookmarked = true;
                                 @endphp
-                                @if ($task->user_id === $user->id)
-                                    @php
-                                        $is_bookmarked = true;
-                                    @endphp
-                                    <form method="post" action="{{route('tasks.bookmark', $task->task_id)}}">
-                                        @csrf
-                                        <input type="hidden" name='is_bookmarked' value="{{$is_bookmarked}}">
-                                        <x-primary-button class="float-right mr-4 mb-12">ブックマーク解除</x-primary-button>
-                                    </form>
-                                @endif
-                                
-                                @if ($is_bookmarked === false)
-                                    <form method="post" action="{{route('tasks.bookmark', $task->task_id)}}">
-                                        @csrf
-                                        <input type="hidden" name='is_bookmarked' value="{{$is_bookmarked}}">
-                                        <x-primary-button class="float-right mr-4 mb-12">ブックマーク</x-primary-button>
-                                    </form>
-                                @endif
+                                <form method="post" action="{{route('tasks.bookmark', $task->id)}}">
+                                    @csrf
+                                    <input type="hidden" name='is_bookmarked' value="{{$is_bookmarked}}">
+                                    <x-primary-button class="float-right mr-4 mb-12">ブックマーク解除</x-primary-button>
+                                </form>
                             </div>
                             {{-- 追加部分終わり --}}
                             <h1 class="text-lg text-gray-700 font-semibold hover:underline cursor-pointer float-left pt-4">
-                                <a href="{{route('tasks.show', $task->task_id)}}">{{Str::limit ($task->title, 100, ' …' )}} </a>
+                                <a href="{{route('tasks.show', $task->id)}}">{{Str::limit ($task->title, 100, ' …' )}} </a>
                             </h1>
                             <hr class="w-full">
                             <h2 class="text-lg text-gray-700 font-semibold mt-4">内容</h2>
-                            <p class=" text-gray-600">{{Str::limit ($task->content, 100, ' …' )}} </p>
+                            <p class=" text-gray-600">{!!nl2br(e(Str::limit($task->content, 100, ' …' )))!!}</p>
                             @if($task->attached_file_path)
                                 <img src="{{ asset('storage/images/'.$task->attached_file_path)}}" class="mx-auto" style="height:300px;">
                                 <div class="mt-4 flex flex-row-reverse">
